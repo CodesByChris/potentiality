@@ -27,8 +27,10 @@ H.ghype <- function(ensemble = NULL, xi = NULL, omega = NULL, directed = NULL, s
   pstar <- max(ps)
   k <- sum(ix)
   if(is.null(m))  m <- ensemble$m
-  x <- seq(10, 100, by=10)
-  xmax <- x[which(log10(k) + x*log10(m*exp(1)/x) + log10(x) + log10(log(x)) + x*log10(pstar) < -2)[1]]
+  x <- seq(10, 150, by=10)
+  xmax <- x[which(log10(k) + log10(choose(m, x)) + log10(x) + log10(log(x)) + x*log10(pstar) < -2)[1]]
+  if (is.na(xmax))
+      xmax <- 150
 
   x <- t(matrix(2:xmax, xmax-1, sum(nnzeros)))
 
