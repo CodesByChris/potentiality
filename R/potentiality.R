@@ -22,17 +22,17 @@ library(ghypernet)
 ################################################################################
 
 .logfactorial <- Vectorize(function(n){
-    if(n<170) return(log(factorial(n)))
-    return(1/2*log(2*pi) + (n+1/2)*log(n) - n)
+    if (n == 0)
+        return(1)
+    return(sum(sapply(1:n, log)))
 })
 
 
 .logapproxchoose <- Vectorize(function(n, k) {
-    if(n <= 6000 && k <= 140)  # chosen by hand
-        return(log(choose(n, k)))
-
-    # Stirling approximation of binomial coefficient
-    return( (0.5 + n)*log(n) - (0.5 + k)*log(k) - (0.5 + n - k)*log(n - k) - 0.5 * log(2 * pi) )
+    stopifnot(0 <= k && k <= n)
+    if (k == n || k == 0)
+        return(0)
+    return(.logfactorial(n) - .logfactorial(k) - .logfactorial(n-k))
 }, vectorize.args = "k")
 
 
@@ -61,8 +61,7 @@ library(ghypernet)
     # k <- sum(ix)
     if(is.null(m))  m <- ensemble$m
 
-    xmax <- m %/% 2
-    x <- t(matrix(2:xmax, xmax-1, sum(nnzeros)))
+    x <- t(matrix(2:m, m-1, sum(nnzeros)))
     sums <-  sum( exp(matrix(.logapproxchoose(m, x), sum(nnzeros)) + x*log(ps) + log(1-ps)*(m-x) + log(matrix(.logfactorial(x), nrow=sum(nnzeros)))) )
     # while(sums[length(sums)]>1e-200){
     #     x <- t(matrix((max(x)+1):(max(x)+1), 1, sum(nnzeros)))
