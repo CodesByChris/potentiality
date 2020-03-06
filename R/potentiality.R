@@ -21,18 +21,18 @@ library(ghypernet)
 ### Potentiality
 ################################################################################
 
-.logfactorial <- Vectorize(function(n){
+.logfactorialtable <- Vectorize(function(n){
     if (n == 0)
-        return(1)
-    return(sum(sapply(1:n, log)))
+        return(0)  # log(0!) := log(1) = 0
+    return(cumsum(sapply(1:n, log)))
 })
 
 
-.logapproxchoose <- Vectorize(function(n, k) {
+.logapproxchoose <- Vectorize(function(n, k, logfactorial_table) {
     stopifnot(0 <= k && k <= n)
     if (k == n || k == 0)
         return(0)
-    return(.logfactorial(n) - .logfactorial(k) - .logfactorial(n-k))
+    return(logfactorial_table[n] - logfactorial_table[k] - logfactorial_table[n-k])
 }, vectorize.args = "k")
 
 
@@ -62,21 +62,18 @@ library(ghypernet)
     if(is.null(m))  m <- ensemble$m
 
     x <- t(matrix(2:m, m-1, sum(nnzeros)))
-    sums <-  sum( exp(matrix(.logapproxchoose(m, x), sum(nnzeros)) + x*log(ps) + log(1-ps)*(m-x) + log(matrix(.logfactorial(x), nrow=sum(nnzeros)))) )
-    # while(sums[length(sums)]>1e-200){
-    #     x <- t(matrix((max(x)+1):(max(x)+1), 1, sum(nnzeros)))
-    #     sums <- c(sums, sum( exp(matrix(.logapproxchoose(m, x), sum(nnzeros)) + x*log(ps) + log(1-ps)*(m-x) + log(matrix(.logfactorial(x), nrow=sum(nnzeros)))) ))
-    # }
+    logfactorial_table <- .logfactorialtable(m)
+    sums <-  sum( exp(matrix(.logapproxchoose(m, x, logfactorial_table), sum(nnzeros)) + x*log(ps) + log(1-ps)*(m-x) + log(matrix(logfactorial_table[x], nrow=sum(nnzeros)))) )
 
-    Hval <- - .logfactorial(m) - m*sum(ps*log(ps)) + sum(sums)
+    Hval <- - logfactorial_table[m] - m*sum(ps*log(ps)) + sum(sums)
     return('H' = Hval)
 }
 
 
 .maxEntropy <- function(ensemble=NULL, m=NULL, N=NULL, directed=NULL, selfloops=NULL){
-    if(is.null(ensemble)){
+    if (is.null(ensemble)) {
         mat <- matrix(0, N, N)
-    } else{
+    } else {
         mat <- ensemble$xi
         m <- ensemble$m
         N <- nrow(mat)
@@ -90,12 +87,9 @@ library(ghypernet)
 
     ps <- 1/k
 
-    x <- 2:(m %/% 2)
-    sums <-  k * exp(.logapproxchoose(m,x) + x * log(ps) + (m-x) * log(1-ps) + log(.logfactorial(x)))
-    # while(sums[length(sums)]>1e-2){
-    #   x <- (max(x)+1):(max(x)+10)
-    #   sums <- c(sums, k*approxchoose(m,x)*ps^x * (1-ps)^(m-x) * .logfactorial(x))
-    # }
+    x <- 2:m
+    logfactorial_table <- .logfactorialtable(m)
+    sums <-  k * exp(.logapproxchoose(m, x, logfactorial_table) + x * log(ps) + (m-x) * log(1-ps) + log(logfactorial_table[x]))
 
     Hval <- - .logfactorial(m) - m*log(ps) + sum(sums)
     return('H' = Hval)
