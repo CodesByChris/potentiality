@@ -91,7 +91,7 @@ library(ghypernet)
     logfactorial_table <- .logfactorialtable(m)
     sums <-  k * exp(.logapproxchoose(m, x, logfactorial_table) + x * log(ps) + (m-x) * log(1-ps) + log(logfactorial_table[x]))
 
-    Hval <- - .logfactorial(m) - m*log(ps) + sum(sums)
+    Hval <- - logfactorial_table[m] - m*log(ps) + sum(sums)
     return('H' = Hval)
 }
 
