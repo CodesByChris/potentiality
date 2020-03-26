@@ -56,6 +56,11 @@ library(ghypernet)
     ps <- xi*omega/pp
     nnzeros <- ps!=0
     ps <- ps[nnzeros]
+    if (length(ps) == 1) {
+        if (ps != 1)
+            stop("Single probability != 1 encountered: ", ps)
+        return(0)
+    }
 
     # pstar <- max(ps)
     # k <- sum(ix)
@@ -63,8 +68,15 @@ library(ghypernet)
 
     x <- t(matrix(2:m, m-1, sum(nnzeros)))
     logfactorial_table <- .logfactorialtable(m)
-    sums <-  sum( exp(matrix(.logapproxchoose(m, x, logfactorial_table), sum(nnzeros)) + x*log(ps) + log(1-ps)*(m-x) + log(matrix(logfactorial_table[x], nrow=sum(nnzeros)))) )
 
+    # Compute last summand of Eq.(7) in DOI:10.3390/e21090901 (using tricks like z=e^log(z))
+    # sums <-  sum( exp(matrix(.logapproxchoose(m, x, logfactorial_table), sum(nnzeros)) + x*log(ps) + log(1-ps)*(m-x) + log(matrix(logfactorial_table[x], nrow=sum(nnzeros)))) )
+    sums <- sum(sapply(2:m,
+                       function(x) {
+                           logfactorial_table[x] * sum(
+                               exp(logfactorial_table[m] - logfactorial_table[x] - logfactorial_table[m-x] + x*log(ps) + (m-x)*log(1-ps))
+                           )
+                       }))
     Hval <- - logfactorial_table[m] - m*sum(ps*log(ps)) + sum(sums)
     return('H' = Hval)
 }
