@@ -36,29 +36,6 @@ library(ghypernet)
 }, vectorize.args = "k")
 
 
-.equation7 <- function(m, ps) {
-    # Compute Eq.(7) in DOI:10.3390/e21090901
-    if (length(ps) == 1) {
-        if (ps != 1)
-            stop("Single probability != 1 encountered: ", ps)
-        return(0)
-    }
-
-    # Compute last summand (using tricks like z=e^log(z))
-    logfactorial_table <- .logfactorialtable(m)
-    last <- sum(sapply(2:m,
-                       function(x) {
-                           logfactorial_table[x] * sum(
-                               exp(logfactorial_table[m] - logfactorial_table[x] - logfactorial_table[m-x] + x*log(ps) + (m-x)*log(1-ps))
-                           )
-                       }))
-
-    # Compute the entropy
-    Hval <- - logfactorial_table[m] - m*sum(ps*log(ps)) + last
-    return('H' = Hval)
-}
-
-
 .H.ghype <- function(ensemble = NULL, xi = NULL, omega = NULL, directed = NULL, selfloops = NULL, m = NULL){
     # entropy of the multinomial approximation
 
@@ -85,9 +62,31 @@ library(ghypernet)
     # Compute the ps (according to Eq.(8) in DOI:10.3390/e21090901)
     ps <- xi*omega/sum(xi*omega)
     ps <- ps[ps != 0]
+    # Note: For empirical systems with many disconnected components in the
+    #     interaction network this filtering tremendously speeds up the
+    #     computation, given that most entries of ps are zero due to the
+    #     disconnected components.
+
+
+    # Compute the entropy (Eq.(7) in DOI:10.3390/e21090901)
+    if (length(ps) == 1) {
+        if (ps != 1)
+            stop("Single probability != 1 encountered: ", ps)
+        return(0)
+    }
+
+    # Compute last summand (using the trick z=e^log(z) for z>0)
+    logfactorial_table <- .logfactorialtable(m)
+    last <- sum(sapply(2:m,
+                       function(x) {
+                           logfactorial_table[x] * sum(
+                               exp(logfactorial_table[m] - logfactorial_table[x] - logfactorial_table[m-x] + x*log(ps) + (m-x)*log(1-ps))
+                           )
+                       }))
 
     # Compute the entropy
-    return(.equation7(m, ps))
+    Hval <- -logfactorial_table[m] - m*sum(ps*log(ps)) + last
+    return('H' = Hval)
 }
 
 
@@ -105,10 +104,14 @@ library(ghypernet)
 
     # Compute the ps (according to Eq.(9), i.e. all node-pairs equally likely)
     k <- sum(ix)
-    ps <- rep(1/k, k)
+    ps <- 1/k
 
-    # Compute the entropy
-    return(.equation7(m, ps))
+    # Compute the entropy (by pre-computing as much as possible in Eq.(7))
+    x <- 2:m
+    logfactorial_table <- .logfactorialtable(m)
+    last <- sum(k * exp(.logapproxchoose(m, x, logfactorial_table) + x * log(ps) + (m-x) * log(1-ps) + log(logfactorial_table[x])))
+    Hval <- -logfactorial_table[m] - m*log(ps) + last
+    return('H' = Hval)
 }
 
 
