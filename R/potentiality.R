@@ -68,24 +68,27 @@ library(ghypernet)
     #     disconnected components.
 
 
-    # Compute the entropy (Eq.(7) in DOI:10.3390/e21090901)
+    # Special Case: 1 Probability
     if (length(ps) == 1) {
         if (ps != 1)
             stop("Single probability != 1 encountered: ", ps)
         return(0)
     }
 
-    # Compute last summand (using the trick z=e^log(z) for z>0)
+    # Compute last term (using a trick from scipy with a nested binomial PMF, see https://github.com/scipy/scipy/blob/v1.4.1/scipy/stats/_multivariate.py#L3158)
     logfactorial_table <- .logfactorialtable(m)
-    last <- sum(sapply(2:m,
-                       function(x) {
-                           logfactorial_table[x] * sum(
-                               exp(logfactorial_table[m] - logfactorial_table[x] - logfactorial_table[m-x] + x*log(ps) + (m-x)*log(1-ps))
-                           )
-                       }))
+    sapply(2:m,
+           function(x, ps, logfactorial_table) {
+               logfactorial_table[x] * sum(
+                   Vectorize(dbinom, "prob")(x = x, size = m, prob = ps)
+               )
+           },
+           ps = ps, logfactorial_table = logfactorial_table) %>%
+        sum() ->
+        last_term
 
-    # Compute the entropy
-    Hval <- -logfactorial_table[m] - m*sum(ps*log(ps)) + last
+    # Compute the entropy (Eq.(7) in DOI:10.3390/e21090901)
+    Hval <- -logfactorial_table[m] - m*sum(ps*log(ps)) + last_term
     return('H' = Hval)
 }
 
@@ -106,11 +109,11 @@ library(ghypernet)
     k <- sum(ix)
     ps <- 1/k
 
-    # Compute the entropy (by pre-computing as much as possible in Eq.(7))
+    # Compute the entropy (using a numpy-trick as in .H.ghype above)
     x <- 2:m
     logfactorial_table <- .logfactorialtable(m)
-    last <- sum(k * exp(.logapproxchoose(m, x, logfactorial_table) + x * log(ps) + (m-x) * log(1-ps) + log(logfactorial_table[x])))
-    Hval <- -logfactorial_table[m] - m*log(ps) + last
+    last_term <- k * sum(logfactorial_table[x] * Vectorize(dbinom, "x")(x = x, size = m, prob = ps))
+    Hval <- -logfactorial_table[m] - m*log(ps) + last_term
     return('H' = Hval)
 }
 
