@@ -88,8 +88,7 @@ library(ghypernet)
         last_term
 
     # Compute the entropy (Eq.(7) in DOI:10.3390/e21090901)
-    Hval <- -logfactorial_table[m] - m*sum(ps*log(ps)) + last_term
-    return('H' = Hval)
+    return(-logfactorial_table[m] - m*sum(ps*log(ps)) + last_term)
 }
 
 
@@ -113,8 +112,7 @@ library(ghypernet)
     x <- 2:m
     logfactorial_table <- .logfactorialtable(m)
     last_term <- k * sum(logfactorial_table[x] * Vectorize(dbinom, "x")(x = x, size = m, prob = ps))
-    Hval <- -logfactorial_table[m] - m*log(ps) + last_term
-    return('H' = Hval)
+    return(-logfactorial_table[m] - m*log(ps) + last_term)
 }
 
 
