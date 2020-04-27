@@ -21,21 +21,6 @@ library(ghypernet)
 ### Potentiality
 ################################################################################
 
-.logfactorialtable <- Vectorize(function(n){
-    if (n == 0)
-        return(0)  # log(0!) := log(1) = 0
-    return(cumsum(sapply(1:n, log)))
-})
-
-
-.logapproxchoose <- Vectorize(function(n, k, logfactorial_table) {
-    stopifnot(0 <= k && k <= n)
-    if (k == n || k == 0)
-        return(0)
-    return(logfactorial_table[n] - logfactorial_table[k] - logfactorial_table[n-k])
-}, vectorize.args = "k")
-
-
 .H.ghype <- function(ensemble = NULL, xi = NULL, omega = NULL, directed = NULL, selfloops = NULL, m = NULL){
     # entropy of the multinomial approximation
 
@@ -76,19 +61,18 @@ library(ghypernet)
     }
 
     # Compute last term (using a trick from scipy with a nested binomial PMF, see https://github.com/scipy/scipy/blob/v1.4.1/scipy/stats/_multivariate.py#L3158)
-    logfactorial_table <- .logfactorialtable(m)
     sapply(2:m,
-           function(x, ps, logfactorial_table) {
-               logfactorial_table[x] * sum(
+           function(x, ps) {
+               lfactorial(x) * sum(
                    Vectorize(dbinom, "prob")(x = x, size = m, prob = ps)
                )
            },
-           ps = ps, logfactorial_table = logfactorial_table) %>%
+           ps = ps) %>%
         sum() ->
         last_term
 
     # Compute the entropy (Eq.(7) in DOI:10.3390/e21090901)
-    return(-logfactorial_table[m] - m*sum(ps*log(ps)) + last_term)
+    return(-lfactorial(m) - m*sum(ps*log(ps)) + last_term)
 }
 
 
@@ -110,9 +94,8 @@ library(ghypernet)
 
     # Compute the entropy (using a numpy-trick as in .H.ghype above)
     x <- 2:m
-    logfactorial_table <- .logfactorialtable(m)
-    last_term <- k * sum(logfactorial_table[x] * Vectorize(dbinom, "x")(x = x, size = m, prob = ps))
-    return(-logfactorial_table[m] - m*log(ps) + last_term)
+    last_term <- k * sum(lfactorial(x) * Vectorize(dbinom, "x")(x = x, size = m, prob = ps))
+    return(-lfactorial(m) - m*log(ps) + last_term)
 }
 
 
