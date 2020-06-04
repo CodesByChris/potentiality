@@ -109,7 +109,8 @@ library(ghypernet)
 
 Potentiality <- function(network,
                          directed = is_directed(network),
-                         has_selfloops = any(which_loop(network))) {
+                         has_selfloops = any(which_loop(network)),
+                         full_model = TRUE) {
     # Computes the potentiality according to a MLE fit.
     #
     # The MLE fit has the property that network is preserved as the expected
@@ -119,15 +120,14 @@ Potentiality <- function(network,
     # potentiality of 0 is computed, because there is always only this *one*
     # network which fulfils these constraints.
     #
-    # Args:
-    #     network: igraph graph of which to compute the potentiality
-    #     directed: (optional) Whether network is directed. If omitted, this
-    #         is detected from base_network.
-    #     has_selfloops: (optional) Whether base_network is allowed to have
-    #         self-loops. If omitted, this is detected from base_network.
+    # Args: network: igraph graph of which to compute the potentiality directed:
+    # (optional) Whether network is directed. If omitted, this is detected from
+    # base_network. has_selfloops: (optional) Whether base_network is allowed to
+    # have self-loops. If omitted, this is detected from base_network.
+    # full_model: (optional) whether to use full ghype or bccm. If omitted it
+    # defaults to TRUE
     #
-    # Returns:
-    #     The computed potentiality.
+    # Returns: The computed potentiality.
 
     # Handle empty networks
     if (vcount(network) == 0 || ecount(network) == 0)
@@ -138,7 +138,19 @@ Potentiality <- function(network,
         stop("ERROR: Currently potentiality of selfloop-network not implemented.")
 
     # Compute Potentiality
-    ghype(network, directed = directed, selfloops = has_selfloops) %>%
-        .entropyRatio() %>%
-        return()
+    ## if full_model -> use full ghype propensities
+    if(isTRUE(full_model)){
+        ghype(network, directed = directed, selfloops = has_selfloops, unbiased = FALSE) %>%
+            .entropyRatio() %>%
+            return()
+    }
+
+    ## if !full_model -> use bccm with inferred blocks
+    if(isFALSE(full_model)){
+        net <- igraph::graph_from_adjacency_matrix(get.adjacency(network), weighted = TRUE)
+        labs <- igraph::membership(igraph::cluster_fast_greedy(graph = igraph::as.undirected(net), modularity = FALSE))
+        bccm(igraph::get.adjacency(network, sparse = F), labels = labs, directed = directed, selfloops = has_selfloops) %>%
+            .entropyRatio() %>%
+            return()
+    }
 }
