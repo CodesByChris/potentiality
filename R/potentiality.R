@@ -140,17 +140,20 @@ Potentiality <- function(network,
     # Compute Potentiality
     ## if full_model -> use full ghype propensities
     if(isTRUE(full_model)){
-        ghype(network, directed = directed, selfloops = has_selfloops, unbiased = FALSE) %>%
-            .entropyRatio() %>%
-            return()
+        suppressWarnings(
+          ghype(network, directed = directed, selfloops = has_selfloops, unbiased = FALSE) %>%
+            .entropyRatio() -> pot_val
+        )
     }
 
     ## if !full_model -> use bccm with inferred blocks
     if(isFALSE(full_model)){
         net <- igraph::graph_from_adjacency_matrix(get.adjacency(network), weighted = TRUE)
         labs <- igraph::membership(igraph::cluster_fast_greedy(graph = igraph::as.undirected(net), modularity = FALSE))
-        bccm(igraph::get.adjacency(network, sparse = F), labels = labs, directed = directed, selfloops = has_selfloops) %>%
-            .entropyRatio() %>%
-            return()
+        suppressWarnings(
+          bccm(igraph::get.adjacency(network, sparse = F), labels = labs, directed = directed, selfloops = has_selfloops) %>%
+            .entropyRatio() -> pot_val
+        )
     }
+  return(pot_val)
 }
