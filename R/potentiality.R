@@ -151,7 +151,7 @@ Potentiality <- function(network,
         net <- igraph::graph_from_adjacency_matrix(get.adjacency(network), weighted = TRUE)
         labs <- igraph::membership(igraph::cluster_fast_greedy(graph = igraph::as.undirected(net), modularity = FALSE))
         suppressWarnings(
-          bccm(igraph::get.adjacency(network, sparse = F), labels = labs, directed = directed, selfloops = has_selfloops) %>%
+          bccm(igraph::get.adjacency(network, sparse = F), labels = labs, directed = directed, selfloops = has_selfloops, ignore_pvals = TRUE) %>%
             .entropyRatio() -> pot_val
         )
     }
