@@ -21,11 +21,19 @@ library(ghypernet)
 ### Potentiality
 ################################################################################
 
-.dbinom_optimized <- function(x, size, prob) {
-    # A vectorized call to dbinom, with a speedup by avoiding the re-computation of repeated probabilities.
-    prob_unique <- unique(prob)
-    dbinoms <- Vectorize(dbinom, "prob")(x = x, size = size, prob = prob_unique)
-    return(dbinoms[match(prob, prob_unique)])
+.dbinom_sum_over_probs <- function(xs, size, probs) {
+    # Optimized computation for vector v, where v_i := sum_{p\in probs} dbinom(xs_i, size, p)
+
+    tibble(.probs = probs) %>%
+        plyr::count(vars = ".probs") %$%
+        mapply(function(prob, cnt, size, xs)
+                   return(cnt * dbinom(x=xs, size=size, prob=prob)),
+               prob = .probs,
+               cnt = freq,
+               MoreArgs = list(size=size, xs=xs),
+               SIMPLIFY = FALSE) %>%
+        Reduce(`+`, x = .) %>%
+        return()
 }
 
 
@@ -69,15 +77,8 @@ library(ghypernet)
     }
 
     # Compute last term (using a trick from scipy with a nested binomial PMF, see https://github.com/scipy/scipy/blob/v1.4.1/scipy/stats/_multivariate.py#L3158)
-    sapply(2:m,
-           function(x, ps) {
-               lfactorial(x) * sum(
-                   Vectorize(dbinom, "prob")(x = x, size = m, prob = ps)
-               )
-           },
-           ps = ps) %>%
-        sum() ->
-        last_term
+    xs <- 2:m
+    last_term <- sum(lfactorial(xs) * .dbinom_sum_over_probs(xs, m, ps))
 
     # Compute the entropy (Eq.(7) in DOI:10.3390/e21090901)
     return(-lfactorial(m) - m*sum(ps*log(ps)) + last_term)
@@ -98,12 +99,12 @@ library(ghypernet)
 
     # Compute the ps (according to Eq.(9), i.e. all node-pairs equally likely)
     k <- sum(ix)
-    ps <- 1/k
+    p <- 1/k
 
     # Compute the entropy (using a numpy-trick as in .H.ghype above)
-    x <- 2:m
-    last_term <- k * sum(lfactorial(x) * Vectorize(dbinom, "x")(x = x, size = m, prob = ps))
-    return(-lfactorial(m) - m*log(ps) + last_term)
+    xs <- 2:m
+    last_term <- k * sum(lfactorial(xs) * dbinom(x = xs, size = m, prob = p))
+    return(-lfactorial(m) - m*log(p) + last_term)
 }
 
 
