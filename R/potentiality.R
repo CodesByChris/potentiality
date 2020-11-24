@@ -21,6 +21,14 @@ library(ghypernet)
 ### Potentiality
 ################################################################################
 
+.dbinom_optimized <- function(x, size, prob) {
+    # A vectorized call to dbinom, with a speedup by avoiding the re-computation of repeated probabilities.
+    prob_unique <- unique(prob)
+    dbinoms <- Vectorize(dbinom, "prob")(x = x, size = size, prob = prob_unique)
+    return(dbinoms[match(prob, prob_unique)])
+}
+
+
 .H.ghype <- function(ensemble = NULL, xi = NULL, omega = NULL, directed = NULL, selfloops = NULL, m = NULL){
     # entropy of the multinomial approximation
 
