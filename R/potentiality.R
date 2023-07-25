@@ -1,19 +1,10 @@
 # Potentiality
-#
-# Authors:
-#     Christian Zingg and Giona Casiraghi
-#
-# Source:
-#     Function computing Potentiality as in the Potentiality-Project
-#     (https://github.com/sg-dev/entropy-social-organisation). However, unlike
-#     there the current implementation uses functions from the
-#     entropy-adaptation project (https://github.com/sg-dev/entropy-adaptation),
-#     which compute the multinomial entropy approximation directly in R.
 
 library(magrittr)
 library(dplyr)
 library(tibble)
 library(ghypernet)
+library(igraph)
 
 
 
@@ -122,21 +113,22 @@ Potentiality <- function(network,
                          full_model = TRUE) {
     # Computes the potentiality according to a MLE fit.
     #
-    # The MLE fit has the property that network is preserved as the expected
-    # network over the ensemble.
+    # The MLE fit has the property that network is preserved as the expected network over the
+    # ensemble.
     #
-    # For the special cases where network has no nodes or no edges a
-    # potentiality of 0 is computed, because there is always only this *one*
-    # network which fulfils these constraints.
+    # For the special cases where network has no nodes or no edges, a potentiality of 0 is returned
+    # because there is always only this *one* network which fulfils these constraints.
     #
-    # Args: network: igraph graph of which to compute the potentiality directed:
-    # (optional) Whether network is directed. If omitted, this is detected from
-    # base_network. has_selfloops: (optional) Whether base_network is allowed to
-    # have self-loops. If omitted, this is detected from base_network.
-    # full_model: (optional) whether to use full ghype or bccm. If omitted it
-    # defaults to TRUE
+    # Args:
+    #     network: igraph graph of which to compute the potentiality.
+    #     directed: (optional) Whether network is directed. If omitted, this is detected from
+    #         base_network.
+    #     has_selfloops: (optional) Whether base_network is allowed to have self-loops. If omitted,
+    #         this is detected from base_network.
+    #     full_model: (optional) whether to use full ghype or bccm. If omitted it defaults to TRUE.
     #
-    # Returns: The computed potentiality.
+    # Returns:
+    #     The computed potentiality.
 
     # Handle empty networks
     if (vcount(network) == 0 || ecount(network) == 0)
@@ -157,12 +149,12 @@ Potentiality <- function(network,
 
     ## if !full_model -> use bccm with inferred blocks
     if(isFALSE(full_model)){
-        net <- igraph::graph_from_adjacency_matrix(get.adjacency(network), weighted = TRUE)
-        labs <- igraph::membership(igraph::cluster_fast_greedy(graph = igraph::as.undirected(net), modularity = FALSE))
+        net <- graph_from_adjacency_matrix(get.adjacency(network), weighted = TRUE)
+        labs <- membership(cluster_fast_greedy(graph = as.undirected(net), modularity = FALSE))
         suppressWarnings(
-          bccm(igraph::get.adjacency(network, sparse = F), labels = labs, directed = directed, selfloops = has_selfloops, ignore_pvals = TRUE) %>%
+          bccm(get.adjacency(network, sparse = F), labels = labs, directed = directed, selfloops = has_selfloops, ignore_pvals = TRUE) %>%
             .entropyRatio() -> pot_val
         )
     }
-  return(pot_val)
+    return(pot_val)
 }
