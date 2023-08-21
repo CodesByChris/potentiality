@@ -1,0 +1,16 @@
+Package: potentiality
+Title: R Library to Compute the Entropy and Potentiality of ghypernet Network Ensembles.
+Version: 0.0.0.1
+Authors@R: c(
+    person("Christian", "Zingg", email = "czingg@ethz.ch", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0003-1674-7961")),
+    person("Giona", "Casiraghi", email = "giona@ethz.ch", role = c("aut"))
+    )
+Description: Computes the potentiality, a measure of a social organization's ability to attain different configurations.
+    To account for the constraints that determine how likely each configuration is, the potentiality utilises network ensembles.
+    This R package is an implementation of the following publication at the Chair of Systems Design, ETH Zurich.
+    Zingg, C., Casiraghi, G., Vaccario, V., Schweitzer, F. (2019) <doi:10.3390/e21090901>.
+License: AGPL-3
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
