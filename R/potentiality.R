@@ -1,19 +1,12 @@
-# Potentiality
-
-library(magrittr)
-library(dplyr)
-library(tibble)
-library(ghypernet)
-library(igraph)
-
+# Potentiality implementation.
 
 
 .dbinom_sum_over_probs <- function(xs, size, probs) {
     # Optimized computation for vector v, where v_i := sum_{p\in probs} dbinom(xs_i, size, p)
-    
+
     # Get unique probabilities and their frequencies
     probs_counts <- plyr::count(tibble::tibble(.probs = probs), vars=".probs")
-    
+
     # Get vector of binom sums over p_ij (each entry corresponds to a value of xs)
     binom_sums_per_x <- numeric(length = length(xs))
     for (i in seq_along(probs_counts$.probs)) {
@@ -25,14 +18,14 @@ library(igraph)
 }
 
 
-.H.ghype <- function(ensemble = NULL, xi = NULL, omega = NULL, directed = NULL, selfloops = NULL, m = NULL){
+.H.ghype <- function(ensemble = NULL, xi = NULL, omega = NULL, directed = NULL, selfloops = NULL, m = NULL) {
     # entropy of the multinomial approximation
 
     try(if(is.null(ensemble) & (is.null(xi) | is.null(omega) | is.null(directed) | is.null(selfloops)) )
         stop('specify ensemble'))
 
     # Get xi and omega
-    if (!is.null(ensemble)){
+    if (!is.null(ensemble)) {
         if (is.null(xi))
             xi <- ensemble$xi
         if (is.null(omega))
@@ -40,7 +33,7 @@ library(igraph)
         directed <- ensemble$directed
         selfloops <- ensemble$selfloops
     }
-    ix <- mat2vec.ix(xi, directed, selfloops)
+    ix <- ghypernet::mat2vec.ix(xi, directed, selfloops)
     xi <- xi[ix]
     omega <- omega[ix]
 
@@ -51,10 +44,9 @@ library(igraph)
     # Compute the ps (according to Eq.(8) in DOI:10.3390/e21090901)
     ps <- xi*omega/sum(xi*omega)
     ps <- ps[ps != 0]
-    # Note: For empirical systems with many disconnected components in the
-    #     interaction network this filtering tremendously speeds up the
-    #     computation, given that most entries of ps are zero due to the
-    #     disconnected components.
+    # Note: For empirical systems with many disconnected components in the interaction network this
+    #     filtering tremendously speeds up the computation, given that most entries of ps are zero
+    #     due to the disconnected components.
 
 
     # Special Case: 1 Probability
@@ -64,7 +56,8 @@ library(igraph)
         return(0)
     }
 
-    # Compute last term (using a trick from scipy with a nested binomial PMF, see https://github.com/scipy/scipy/blob/v1.4.1/scipy/stats/_multivariate.py#L3158)
+    # Compute last term (using a trick from scipy with a nested binomial PMF, see
+    # https://github.com/scipy/scipy/blob/v1.4.1/scipy/stats/_multivariate.py#L3158)
     xs <- 2:m
     last_term <- sum(lfactorial(xs) * .dbinom_sum_over_probs(xs, m, ps))
 
@@ -73,7 +66,7 @@ library(igraph)
 }
 
 
-.maxEntropy <- function(ensemble=NULL, m=NULL, N=NULL, directed=NULL, selfloops=NULL){
+.maxEntropy <- function(ensemble = NULL, m = NULL, N = NULL, directed = NULL, selfloops = NULL) {
     if (is.null(ensemble)) {
         mat <- matrix(0, N, N)
     } else {
@@ -83,7 +76,7 @@ library(igraph)
         directed <- ensemble$directed
         selfloops <- ensemble$selfloops
     }
-    ix <- mat2vec.ix(mat, directed, selfloops)
+    ix <- ghypernet::mat2vec.ix(mat, directed, selfloops)
 
     # Compute the ps (according to Eq.(9), i.e. all node-pairs equally likely)
     k <- sum(ix)
@@ -96,7 +89,7 @@ library(igraph)
 }
 
 
-.entropyRatio <- function(model){
+.entropyRatio <- function(model) {
     observed_H <- .H.ghype(model)
     if (observed_H == 0)
         return(0)
@@ -104,54 +97,41 @@ library(igraph)
 }
 
 
+#' Computes the potentiality according to a MLE fit.
+#'
+#' The MLE fit has the property that network is preserved as the expected network over the ensemble.
+#'
+#' For the special cases where network has no nodes or no edges, a potentiality of 0 is returned
+#' because there is always only this *one* network which fulfils these constraints.
+#'
+#' @param network igraph graph of which to compute the potentiality.
+#' @param directed Whether network is directed. If omitted, this is detected from base_network.
+#' @param has_selfloops Whether base_network is allowed to have self-loops. If omitted, this is
+#'      detected from base_network.
+#' @param full_model Whether to use a full ghype (TRUE) or bccm (FALSE). Defaults to TRUE.
+#' @return The computed potentiality.
 Potentiality <- function(network,
-                         directed = is_directed(network),
-                         has_selfloops = any(which_loop(network)),
+                         directed = igraph::is_directed(network),
+                         has_selfloops = any(igraph::which_loop(network)),
                          full_model = TRUE) {
-    # Computes the potentiality according to a MLE fit.
-    #
-    # The MLE fit has the property that network is preserved as the expected network over the
-    # ensemble.
-    #
-    # For the special cases where network has no nodes or no edges, a potentiality of 0 is returned
-    # because there is always only this *one* network which fulfils these constraints.
-    #
-    # Args:
-    #     network: igraph graph of which to compute the potentiality.
-    #     directed: (optional) Whether network is directed. If omitted, this is detected from
-    #         base_network.
-    #     has_selfloops: (optional) Whether base_network is allowed to have self-loops. If omitted,
-    #         this is detected from base_network.
-    #     full_model: (optional) whether to use full ghype or bccm. If omitted it defaults to TRUE.
-    #
-    # Returns:
-    #     The computed potentiality.
 
     # Handle empty networks
-    if (vcount(network) == 0 || ecount(network) == 0)
+    if (igraph::vcount(network) == 0 || igraph::ecount(network) == 0)
         return(0)
 
     # Compute params
-    if(has_selfloops)
+    if (has_selfloops)
         stop("ERROR: Currently potentiality of selfloop-network not implemented.")
 
     # Compute Potentiality
-    ## if full_model -> use full ghype propensities
-    if(isTRUE(full_model)){
-        suppressWarnings(
-          ghype(network, directed = directed, selfloops = has_selfloops, unbiased = FALSE) %>%
-            .entropyRatio() -> pot_val
-        )
+    if (isTRUE(full_model)) {
+        # Use full ghype propensities
+        ens <- ghypernet::ghype(network, directed = directed, selfloops = has_selfloops, unbiased = FALSE)
+    } else {
+        # Use bccm with inferred blocks
+        net <- igraph::graph_from_adjacency_matrix(igraph::get_adjacency(network), weighted = TRUE)
+        labs <- igraph::membership(igraph::cluster_fast_greedy(graph = igraph::as.undirected(net), modularity = FALSE))
+        ens <- ghypernet::bccm(get.adjacency(network, sparse = F), labels = labs, directed = directed, selfloops = has_selfloops, ignore_pvals = TRUE)
     }
-
-    ## if !full_model -> use bccm with inferred blocks
-    if(isFALSE(full_model)){
-        net <- graph_from_adjacency_matrix(get.adjacency(network), weighted = TRUE)
-        labs <- membership(cluster_fast_greedy(graph = as.undirected(net), modularity = FALSE))
-        suppressWarnings(
-          bccm(get.adjacency(network, sparse = F), labels = labs, directed = directed, selfloops = has_selfloops, ignore_pvals = TRUE) %>%
-            .entropyRatio() -> pot_val
-        )
-    }
-    return(pot_val)
+    return(.entropyRatio(ens))
 }
