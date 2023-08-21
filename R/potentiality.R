@@ -8,23 +8,20 @@ library(igraph)
 
 
 
-################################################################################
-### Potentiality
-################################################################################
-
 .dbinom_sum_over_probs <- function(xs, size, probs) {
     # Optimized computation for vector v, where v_i := sum_{p\in probs} dbinom(xs_i, size, p)
-
-    tibble(.probs = probs) %>%
-        plyr::count(vars = ".probs") %$%
-        mapply(function(prob, cnt, size, xs)
-                   return(cnt * dbinom(x=xs, size=size, prob=prob)),
-               prob = .probs,
-               cnt = freq,
-               MoreArgs = list(size=size, xs=xs),
-               SIMPLIFY = FALSE) %>%
-        Reduce(`+`, x = .) %>%
-        return()
+    
+    # Get unique probabilities and their frequencies
+    probs_counts <- plyr::count(tibble::tibble(.probs = probs), vars=".probs")
+    
+    # Get vector of binom sums over p_ij (each entry corresponds to a value of xs)
+    binom_sums_per_x <- numeric(length = length(xs))
+    for (i in seq_along(probs_counts$.probs)) {
+        freq <- probs_counts$freq[[i]]
+        prob <- probs_counts$.probs[[i]]
+        binom_sums_per_x <- binom_sums_per_x + freq * dbinom(x = xs, size = size, prob = prob)
+    }
+    return (binom_sums_per_x)
 }
 
 
