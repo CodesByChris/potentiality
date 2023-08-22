@@ -6,11 +6,25 @@
 \usage{
 .max_entropy(
   ensemble = NULL,
-  m = NULL,
-  n = NULL,
   directed = NULL,
-  selfloops = NULL
+  selfloops = NULL,
+  m = NULL,
+  n = NULL
 )
+}
+\arguments{
+\item{ensemble}{ghype ensemble whose maximum entropy to compute.}
+
+\item{directed}{Whether ensemble contains directed networks.}
+
+\item{selfloops}{Whether ensemble contains networks with selfloops.}
+
+\item{m}{Number of edges in a network in ensemble.}
+
+\item{n}{Number of nodes in a network in ensemble.}
+}
+\value{
+Computed maximum entropy.
 }
 \description{
 Maximum entropy of multinomial approximation.

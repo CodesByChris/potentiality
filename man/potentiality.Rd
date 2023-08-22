@@ -33,5 +33,5 @@ network over the ensemble.
 \details{
 For the special cases where network has no nodes or no edges, a potentiality
 of 0 is returned because there is always only this \emph{one} network which
-fulfils these constraints.
+fulfills these constraints.
 }

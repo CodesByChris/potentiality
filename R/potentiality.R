@@ -1,8 +1,17 @@
 # Potentiality implementation.
 
 
-#' Compute vector v, where v_i := sum_{p in probs} dbinom(xs_i, size, p)
-.dbinom_sum_over_probs <- function(xs, size, probs) {
+#' Compute vector v, where v_i := sum_{p in probs} dbinom(xs_i, m, p)
+#' 
+#' This function computes the inner sum in eqn.(7) of doi:10.3390/e21090901 for
+#' each x in xs and returns them as a vector whose i'th entry corresponds to
+#' `xs[i]`.
+#' 
+#' @param xs The values of x in eqn.(7) for which to compute the inner sum.
+#' @param m Number of edges in a network in the ensemble.
+#' @param probs All p_ij in eqn.(7) as a vector. Their ordering does not matter.
+#' @returns The computed vector containing the dbinom sums.
+.dbinom_sum_over_probs <- function(xs, m, probs) {
 
     # Get unique probabilities and their frequencies
     probs_counts <- plyr::count(tibble::tibble(.probs = probs), vars = ".probs")
@@ -12,7 +21,7 @@
     for (i in seq_along(probs_counts$.probs)) {
         freq <- probs_counts$freq[[i]]
         prob <- probs_counts$.probs[[i]]
-        binoms <- stats::dbinom(x = xs, size = size, prob = prob)
+        binoms <- stats::dbinom(x = xs, size = m, prob = prob)
         binom_sums_per_x <- binom_sums_per_x + freq * binoms
     }
     return(binom_sums_per_x)
@@ -86,7 +95,6 @@ entropy_ghype <- function(ensemble = NULL, xi = NULL, omega = NULL,
 #' Maximum entropy of multinomial approximation.
 #' 
 #' @param ensemble ghype ensemble whose maximum entropy to compute.
-#' @param xi A combinatorial matrix Xi to use instead of the ensemble's.
 #' @param directed Whether ensemble contains directed networks.
 #' @param selfloops Whether ensemble contains networks with selfloops.
 #' @param m Number of edges in a network in ensemble.

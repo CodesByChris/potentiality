@@ -2,10 +2,16 @@
 % Please edit documentation in R/potentiality.R
 \name{.relative_entropy}
 \alias{.relative_entropy}
-\title{Computes the model's entropy normalized by the theoretical maximum.}
+\title{Computes the ensemble's entropy normalized by the theoretical maximum.}
 \usage{
-.relative_entropy(model)
+.relative_entropy(ensemble)
+}
+\arguments{
+\item{ensemble}{ghype ensemble whose relative entropy to compute.}
+}
+\value{
+Relative entropy as a value in the interval between 0 and 1.
 }
 \description{
-Computes the model's entropy normalized by the theoretical maximum.
+Computes the ensemble's entropy normalized by the theoretical maximum.
 }

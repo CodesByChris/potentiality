@@ -2,10 +2,22 @@
 % Please edit documentation in R/potentiality.R
 \name{.dbinom_sum_over_probs}
 \alias{.dbinom_sum_over_probs}
-\title{Compute vector v, where v_i := sum_{p in probs} dbinom(xs_i, size, p)}
+\title{Compute vector v, where v_i := sum_{p in probs} dbinom(xs_i, m, p)}
 \usage{
-.dbinom_sum_over_probs(xs, size, probs)
+.dbinom_sum_over_probs(xs, m, probs)
+}
+\arguments{
+\item{xs}{The values of x in eqn.(7) for which to compute the inner sum.}
+
+\item{m}{Number of edges in a network in the ensemble.}
+
+\item{probs}{All p_ij in eqn.(7) as a vector. Their ordering does not matter.}
+}
+\value{
+The computed vector containing the dbinom sums.
 }
 \description{
-Compute vector v, where v_i := sum_{p in probs} dbinom(xs_i, size, p)
+This function computes the inner sum in eqn.(7) of doi:10.3390/e21090901 for
+each x in xs and returns them as a vector whose i'th entry corresponds to
+\code{xs[i]}.
 }
