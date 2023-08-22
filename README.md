@@ -1,5 +1,5 @@
 [![R-CMD-check](https://github.com/CodesByChris/potentiality/actions/workflows/check-release.yaml/badge.svg)](https://github.com/CodesByChris/potentiality/actions/workflows/check-release.yaml)
-[![GitHub](https://img.shields.io/github/license/CodesByChris/potentiality?label=License)](blob/main/LICENSE)
+[![GitHub](https://img.shields.io/github/license/CodesByChris/potentiality?label=License)](LICENSE)
 
 
 
