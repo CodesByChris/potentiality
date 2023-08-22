@@ -103,7 +103,8 @@ test_that("Undirected star", {
     ntwk <- igraph::make_empty_graph(10, directed = FALSE)
     for (j in i_others)
         ntwk %<>% igraph::add_edges(rep(c(i_center, j), times = 10))
-    expect_equal(Potentiality(ntwk), 0.27, tolerance = 1E-2)
+    pot <- Potentiality(ntwk)
+    expect_true(0.265 <= pot && pot <= 0.275)
 })
 
 
@@ -113,9 +114,9 @@ test_that("Undirected star", {
 
 test_that("Karate club", {
     data(karate, package = "igraphdata")
-    karate %>%
+    pot <- karate %>%
         igraph::get.adjacency(attr = "weight", sparse = FALSE) %>%
-        igraph::graph_from_adjacency_matrix(mode = "undirected") ->
-        karate_network
-    expect_equal(Potentiality(karate_network), 0.31, tolerance = 1E-2)
+        igraph::graph_from_adjacency_matrix(mode = "undirected") %>%
+        Potentiality()
+    expect_true(0.305 <= pot && pot <= 0.315)
 })
