@@ -16,6 +16,6 @@ library(devtools)
 # Install latest release version
 install_github("CodesByChris/potentiality", ref = github_release())
 
-# Install latest development version
-install_github("CodesByChris/potentiality")
+# Or: Install latest development version
+# install_github("CodesByChris/potentiality")
 ```
