@@ -185,8 +185,8 @@ potentiality <- function(network,
         adj <- igraph::get.adjacency(network, sparse = FALSE)
         net <- igraph::graph_from_adjacency_matrix(adj, weighted = TRUE)
         labs <- igraph::membership(igraph::cluster_fast_greedy(
-            graph = igraph::as.undirected(net), modularity = FALSE)
-        )
+            graph = igraph::as.undirected(net), modularity = FALSE
+        ))
         ens <- ghypernet::bccm(adj, labels = labs, directed = directed,
                                selfloops = has_selfloops, ignore_pvals = TRUE)
     }
