@@ -12,7 +12,7 @@
     for (i in seq_along(probs_counts$.probs)) {
         freq <- probs_counts$freq[[i]]
         prob <- probs_counts$.probs[[i]]
-        binom_sums_per_x <- binom_sums_per_x + freq * dbinom(x = xs, size = size, prob = prob)
+        binom_sums_per_x <- binom_sums_per_x + freq * stats::dbinom(x = xs, size = size, prob = prob)
     }
     return (binom_sums_per_x)
 }
@@ -84,7 +84,7 @@
 
     # Compute the entropy (using a numpy-trick as in .H.ghype above)
     xs <- 2:m
-    last_term <- k * sum(lfactorial(xs) * dbinom(x = xs, size = m, prob = p))
+    last_term <- k * sum(lfactorial(xs) * stats::dbinom(x = xs, size = m, prob = p))
     return(-lfactorial(m) - m*log(p) + last_term)
 }
 
@@ -110,6 +110,7 @@
 #'      detected from base_network.
 #' @param full_model Whether to use a full ghype (TRUE) or bccm (FALSE). Defaults to TRUE.
 #' @return The computed potentiality.
+#' @export
 Potentiality <- function(network,
                          directed = igraph::is_directed(network),
                          has_selfloops = any(igraph::which_loop(network)),
@@ -129,9 +130,10 @@ Potentiality <- function(network,
         ens <- ghypernet::ghype(network, directed = directed, selfloops = has_selfloops, unbiased = FALSE)
     } else {
         # Use bccm with inferred blocks
-        net <- igraph::graph_from_adjacency_matrix(igraph::get_adjacency(network), weighted = TRUE)
+        adj <- igraph::get.adjacency(network, sparse = FALSE)
+        net <- igraph::graph_from_adjacency_matrix(adj, weighted = TRUE)
         labs <- igraph::membership(igraph::cluster_fast_greedy(graph = igraph::as.undirected(net), modularity = FALSE))
-        ens <- ghypernet::bccm(get.adjacency(network, sparse = F), labels = labs, directed = directed, selfloops = has_selfloops, ignore_pvals = TRUE)
+        ens <- ghypernet::bccm(adj, labels = labs, directed = directed, selfloops = has_selfloops, ignore_pvals = TRUE)
     }
     return(.entropyRatio(ens))
 }
