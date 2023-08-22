@@ -1,8 +1,6 @@
 # Tests for Potentiality.
 
 library(magrittr)
-library(testthat)
-source("../../R/potentiality.R")  # Remove for package version
 
 
 ####################################################################################################
