@@ -20,23 +20,37 @@
 
 
 #' Entropy of multinomial approximation.
-.entropy_ghype <- function(ensemble = NULL, xi = NULL, omega = NULL,
-                           directed = NULL, selfloops = NULL, m = NULL) {
+#'
+#' @param ensemble ghype ensemble whose entropy to compute.
+#' @param xi A combinatorial matrix Xi to use instead of the ensemble's.
+#' @param omega A propensity matrix Omega to use instead of the ensemble's.
+#' @param directed Whether ensemble contains directed networks.
+#' @param selfloops Whether ensemble contains networks with selfloops.
+#' @param m Number of edges in a network in ensemble.
+#' @returns Computed entropy.
+#' @export
+entropy_ghype <- function(ensemble = NULL, xi = NULL, omega = NULL,
+                          directed = NULL, selfloops = NULL, m = NULL) {
 
     # Validate args
     if (is.null(ensemble) && (is.null(xi) || is.null(omega) ||
-                              is.null(directed) || is.null(selfloops)))
+                              is.null(directed) || is.null(selfloops) ||
+                              is.null(m)))
         stop("Either `ensemble` or separate params must be given.")
 
     if (!is.null(ensemble)) {
-        xi <- ensemble$xi
-        omega <- ensemble$omega
-        directed <- ensemble$directed
-        selfloops <- ensemble$selfloops
+        if (is.null(xi))
+            xi <- ensemble$xi
+        if (is.null(omega))
+            omega <- ensemble$omega
+        if (is.null(directed))
+            directed <- ensemble$directed
+        if (is.null(selfloops))
+            selfloops <- ensemble$selfloops
+        if (is.null(m))
+            m <- ensemble$m
     }
 
-    if (is.null(m))
-        m <- ensemble$m
 
     # Get xi and omega
     ix <- ghypernet::mat2vec.ix(xi, directed, selfloops)
@@ -70,24 +84,39 @@
 
 
 #' Maximum entropy of multinomial approximation.
-.max_entropy <- function(ensemble = NULL, m = NULL, n = NULL,
-                         directed = NULL, selfloops = NULL) {
-    if (is.null(ensemble)) {
-        mat <- matrix(0, n, n)
-    } else {
-        mat <- ensemble$xi
-        m <- ensemble$m
-        n <- nrow(mat)  # TODO: Is this even used?
-        directed <- ensemble$directed
-        selfloops <- ensemble$selfloops
+#' 
+#' @param ensemble ghype ensemble whose maximum entropy to compute.
+#' @param xi A combinatorial matrix Xi to use instead of the ensemble's.
+#' @param directed Whether ensemble contains directed networks.
+#' @param selfloops Whether ensemble contains networks with selfloops.
+#' @param m Number of edges in a network in ensemble.
+#' @param n Number of nodes in a network in ensemble.
+#' @returns Computed maximum entropy.
+.max_entropy <- function(ensemble = NULL, directed = NULL, selfloops = NULL,
+                         m = NULL, n = NULL) {
+    # Validate args
+    if (is.null(ensemble) && (is.null(directed) || is.null(selfloops) ||
+                              is.null(m) || is.null(n)))
+        stop("Either `ensemble` or separate params must be given.")
+    
+    if (!is.null(ensemble)) {
+        if (is.null(directed))
+            directed <- ensemble$directed
+        if (is.null(selfloops))
+            selfloops <- ensemble$selfloops
+        if (is.null(m))
+            m <- ensemble$m
+        if (is.null(n))
+            n <- nrow(ensemble$xi)
     }
-    ix <- ghypernet::mat2vec.ix(mat, directed, selfloops)
+    
+    ix <- ghypernet::mat2vec.ix(matrix(0, n, n), directed, selfloops)
 
     # Compute the ps (according to Eq.(9), i.e. all node-pairs equally likely)
     k <- sum(ix)
     p <- 1 / k
 
-    # Compute the entropy (using a numpy-trick as in .entropy_ghype above)
+    # Compute the entropy (using a numpy-trick as in entropy_ghype above)
     xs <- 2:m
     binoms <- stats::dbinom(x = xs, size = m, prob = p)
     last_term <- k * sum(lfactorial(xs) * binoms)
@@ -95,12 +124,15 @@
 }
 
 
-#' Computes the model's entropy normalized by the theoretical maximum.
-.relative_entropy <- function(model) {
-    entropy <- .entropy_ghype(model)
+#' Computes the ensemble's entropy normalized by the theoretical maximum.
+#' 
+#' @param ensemble ghype ensemble whose relative entropy to compute.
+#' @returns Relative entropy as a value in the interval between 0 and 1.
+.relative_entropy <- function(ensemble) {
+    entropy <- entropy_ghype(ensemble)
     if (entropy == 0)
         return(0)
-    return(entropy / .max_entropy(model))
+    return(entropy / .max_entropy(ensemble))
 }
 
 
@@ -111,7 +143,7 @@
 #'
 #' For the special cases where network has no nodes or no edges, a potentiality
 #' of 0 is returned because there is always only this *one* network which
-#' fulfils these constraints.
+#' fulfills these constraints.
 #'
 #' @param network igraph graph of which to compute the potentiality.
 #' @param directed Whether network is directed. If omitted, this is detected
