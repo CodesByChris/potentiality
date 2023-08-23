@@ -23,3 +23,19 @@ install_github("CodesByChris/potentiality", ref = github_release())
 # Or: Install latest development version
 # install_github("CodesByChris/potentiality")
 ```
+
+## Contributors
+
+The code in this repository has been developed by
+
+- Christian Zingg
+- Giona Casiraghi
+
+at the Chair of Systems Design, ETH Zurich.
+
+
+## Copyright
+
+The `potentiality` R library is released under the GNU Affero General Public License v3.0
+
+Copyright 2019-2023, ETH Zurich.
