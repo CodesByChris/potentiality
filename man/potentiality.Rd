@@ -12,7 +12,8 @@ potentiality(
 )
 }
 \arguments{
-\item{network}{igraph graph of which to compute the potentiality.}
+\item{network}{Multiedge network of which to compute the potentiality, given
+as an igraph graph.}
 
 \item{directed}{Whether network is directed. If omitted, this is detected
 from base_network.}

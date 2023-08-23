@@ -108,7 +108,8 @@ entropy_ghype <- function(ens) {
 #' of 0 is returned because there is always only this *one* network which
 #' fulfills these constraints.
 #'
-#' @param network igraph graph of which to compute the potentiality.
+#' @param network Multiedge network of which to compute the potentiality, given
+#'   as an igraph graph.
 #' @param directed Whether network is directed. If omitted, this is detected
 #'   from base_network.
 #' @param has_selfloops Whether base_network is allowed to have self-loops. If
