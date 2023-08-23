@@ -2,33 +2,16 @@
 % Please edit documentation in R/potentiality.R
 \name{entropy_ghype}
 \alias{entropy_ghype}
-\title{Entropy of multinomial approximation.}
+\title{Entropy of multinomial approximation to Wallenius distribution.}
 \usage{
-entropy_ghype(
-  ensemble = NULL,
-  xi = NULL,
-  omega = NULL,
-  directed = NULL,
-  selfloops = NULL,
-  m = NULL
-)
+entropy_ghype(ens)
 }
 \arguments{
-\item{ensemble}{ghype ensemble whose entropy to compute.}
-
-\item{xi}{A combinatorial matrix Xi to use instead of the ensemble's.}
-
-\item{omega}{A propensity matrix Omega to use instead of the ensemble's.}
-
-\item{directed}{Whether ensemble contains directed networks.}
-
-\item{selfloops}{Whether ensemble contains networks with selfloops.}
-
-\item{m}{Number of edges in a network in ensemble.}
+\item{ens}{ghype ensemble whose entropy to compute.}
 }
 \value{
 Computed entropy.
 }
 \description{
-Entropy of multinomial approximation.
+Entropy of multinomial approximation to Wallenius distribution.
 }

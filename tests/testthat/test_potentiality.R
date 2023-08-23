@@ -101,8 +101,9 @@ test_that("Undirected star", {
   i_center <- 1
   i_others <- (1:10)[-i_center]
   ntwk <- igraph::make_empty_graph(10, directed = FALSE)
-  for (j in i_others)
+  for (j in i_others) {
     ntwk %<>% igraph::add_edges(rep(c(i_center, j), times = 10))
+  }
   pot <- potentiality(ntwk)
   expect_true(0.265 <= pot && pot <= 0.275)
 })

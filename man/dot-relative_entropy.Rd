@@ -4,10 +4,10 @@
 \alias{.relative_entropy}
 \title{Computes the ensemble's entropy normalized by the theoretical maximum.}
 \usage{
-.relative_entropy(ensemble)
+.relative_entropy(ens)
 }
 \arguments{
-\item{ensemble}{ghype ensemble whose relative entropy to compute.}
+\item{ens}{ghype ensemble whose relative entropy to compute.}
 }
 \value{
 Relative entropy as a value in the interval between 0 and 1.
