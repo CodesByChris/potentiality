@@ -28,45 +28,19 @@
 }
 
 
-#' Entropy of multinomial approximation.
+#' Entropy of multinomial approximation to Wallenius distribution.
 #'
-#' @param ensemble ghype ensemble whose entropy to compute.
-#' @param xi A combinatorial matrix Xi to use instead of the ensemble's.
-#' @param omega A propensity matrix Omega to use instead of the ensemble's.
-#' @param directed Whether ensemble contains directed networks.
-#' @param selfloops Whether ensemble contains networks with selfloops.
-#' @param m Number of edges in a network in ensemble.
+#' @param ens ghype ensemble whose entropy to compute.
 #' @returns Computed entropy.
 #' @export
-entropy_ghype <- function(ensemble = NULL, xi = NULL, omega = NULL,
-                          directed = NULL, selfloops = NULL, m = NULL) {
+entropy_ghype <- function(ens) {
 
-  # Validate args
-  if (is.null(ensemble) && (is.null(xi) || is.null(omega) ||
-                            is.null(directed) || is.null(selfloops) ||
-                            is.null(m)))
-    stop("Either `ensemble` or separate params must be given.")
+  # Get xi and omega as vectors
+  ix <- ghypernet::mat2vec.ix(ens$xi, ens$directed, ens$selfloops)
+  xi <- ens$xi[ix]
+  omega <- ens$omega[ix]
 
-  if (!is.null(ensemble)) {
-    if (is.null(xi))
-      xi <- ensemble$xi
-    if (is.null(omega))
-      omega <- ensemble$omega
-    if (is.null(directed))
-      directed <- ensemble$directed
-    if (is.null(selfloops))
-      selfloops <- ensemble$selfloops
-    if (is.null(m))
-      m <- ensemble$m
-  }
-
-
-  # Get xi and omega
-  ix <- ghypernet::mat2vec.ix(xi, directed, selfloops)
-  xi <- xi[ix]
-  omega <- omega[ix]
-
-  # Compute the ps (according to Eq.(8) in DOI:10.3390/e21090901)
+  # Compute ps according to Eq.(8) in DOI:10.3390/e21090901
   ps <- xi * omega / sum(xi * omega)
   ps <- ps[ps != 0]
   # Note: For empirical systems with many disconnected components in the
@@ -82,49 +56,30 @@ entropy_ghype <- function(ensemble = NULL, xi = NULL, omega = NULL,
     return(0)
   }
 
-  # Compute last term (using a trick from scipy with a nested binomial PMF,
-  # see github.com/scipy/scipy/blob/v1.4.1/scipy/stats/_multivariate.py#L3158)
+  # Compute last term using trick from SciPy with nested binomial PMF, see
+  #   github.com/scipy/scipy/blob/v1.4.1/scipy/stats/_multivariate.py#L3158
+  m <- ens$m
   xs <- 2:m
   last_term <- sum(lfactorial(xs) * .dbinom_sum_over_probs(xs, m, ps))
 
-  # Compute the entropy (Eq.(7) in DOI:10.3390/e21090901)
+  # Compute entropy (Eq.(7) in DOI:10.3390/e21090901)
   return(-lfactorial(m) - m * sum(ps * log(ps)) + last_term)
 }
 
 
 #' Maximum entropy of multinomial approximation.
 #'
-#' @param ensemble ghype ensemble whose maximum entropy to compute.
-#' @param directed Whether ensemble contains directed networks.
-#' @param selfloops Whether ensemble contains networks with selfloops.
-#' @param m Number of edges in a network in ensemble.
-#' @param n Number of nodes in a network in ensemble.
+#' @param ens ghype ensemble whose maximum entropy to compute.
 #' @returns Computed maximum entropy.
-.max_entropy <- function(ensemble = NULL, directed = NULL, selfloops = NULL,
-                         m = NULL, n = NULL) {
-  # Validate args
-  if (is.null(ensemble) && (is.null(directed) || is.null(selfloops) ||
-                            is.null(m) || is.null(n)))
-    stop("Either `ensemble` or separate params must be given.")
+.max_entropy <- function(ens) {
 
-  if (!is.null(ensemble)) {
-    if (is.null(directed))
-      directed <- ensemble$directed
-    if (is.null(selfloops))
-      selfloops <- ensemble$selfloops
-    if (is.null(m))
-      m <- ensemble$m
-    if (is.null(n))
-      n <- nrow(ensemble$xi)
-  }
-
-  ix <- ghypernet::mat2vec.ix(matrix(0, n, n), directed, selfloops)
-
-  # Compute the ps (according to Eq.(9), i.e. all node-pairs equally likely)
+  # Compute ps according to Eq.(9) (all node-pairs equally likely)
+  ix <- ghypernet::mat2vec.ix(ens$xi, ens$directed, ens$selfloops)
   k <- sum(ix)
   p <- 1 / k
 
-  # Compute the entropy (using a numpy-trick as in entropy_ghype above)
+  # Compute entropy with SciPy trick as in entropy_ghype
+  m <- ens$m
   xs <- 2:m
   binoms <- stats::dbinom(x = xs, size = m, prob = p)
   last_term <- k * sum(lfactorial(xs) * binoms)
@@ -134,13 +89,13 @@ entropy_ghype <- function(ensemble = NULL, xi = NULL, omega = NULL,
 
 #' Computes the ensemble's entropy normalized by the theoretical maximum.
 #'
-#' @param ensemble ghype ensemble whose relative entropy to compute.
+#' @param ens ghype ensemble whose relative entropy to compute.
 #' @returns Relative entropy as a value in the interval between 0 and 1.
-.relative_entropy <- function(ensemble) {
-  entropy <- entropy_ghype(ensemble)
+.relative_entropy <- function(ens) {
+  entropy <- entropy_ghype(ens)
   if (entropy == 0)
     return(0)
-  return(entropy / .max_entropy(ensemble))
+  return(entropy / .max_entropy(ens))
 }
 
 
