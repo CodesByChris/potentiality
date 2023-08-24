@@ -1,0 +1,226 @@
+% Visualisation of the computation behind the potentiality measure.
+%
+% Values in visualisation computed as:
+%     library(potentiality)
+%     library(ghypernet)
+%     library(magrittr)
+%     library(igraph)
+%
+%     # Observed network
+%     g <- graph(c(1,2,  1,2,  1,2,  1,2,  1,2,  2,3,  2,3), n = 7, directed = FALSE)
+%
+%     # Alternative networks + likelihoods
+%     ens <- ghype(g, directed = FALSE, selfloops = FALSE)
+%     dghype <- function(g, ens) {
+%         g %>%
+%             get.adjacency(sparse = FALSE) %>%
+%             logl(xi = ens$xi, omega = ens$omega, directed = ens$directed, selfloops = ens$selfloops) %>%
+%             exp() %>%
+%             return()
+%     }
+%     dghype(graph(c(1,2,  1,2,  1,2,  1,2,  1,2,  1,2,  2,3), n = 7, directed = FALSE), ens)  # 0.27
+%     dghype(graph(c(1,2,  1,2,  2,3,  2,3,  2,3,  2,3,  2,3), n = 7, directed = FALSE), ens)  # 0.02
+%     dghype(graph(c(4,5,  5,6,  5,6,  5,6,  5,6,  5,6,  6,7), n = 7, directed = FALSE), ens)  # 0
+%
+%     # Potentiality
+%     potentiality(g, directed = FALSE, selfloops = FALSE)  # 0.12
+
+\documentclass[border={1cm 0.25cm 1cm 0.75cm}]{standalone}
+
+\usepackage{fontawesome5}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{backgrounds}
+\usetikzlibrary{calc}
+\usetikzlibrary{fit}
+\usetikzlibrary{positioning}
+\usetikzlibrary{arrows.meta}
+\usetikzlibrary{shapes.arrows}
+\usetikzlibrary{shapes.geometric}
+
+
+% newcommands
+\newcommand{\code}[1]{\texttt{#1}}
+
+
+% Colors
+\definecolor{potR}{RGB}{168,50,45}
+\definecolor{potY}{HTML}{FBB13C}
+\definecolor{potB}{HTML}{2E5EAA}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Helpers
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Draws parallel multi-edges between two specified nodes
+%   #1: Node 1
+%   #2: Node 2
+%   #3: Number of parallel edges
+\newcommand{\arrowbundle}[3]{
+        % Get starting angle
+        \ifnum#3>0  % If #3 is 0 draw no links.
+                \def\increment{20}  % i.e. 5 degrees per change
+                \pgfmathtruncatemacro\iseven{{Mod(#3,2)}}  % see https://tex.stackexchange.com/a/18790
+                \ifnum\iseven=0
+                        % Case even number of arrows --> initial turn by \increment/2 degrees
+                        \pgfmathsetmacro\baseangle{(\increment / 2) + (((#3 / 2) - 1) * \increment)}
+                \else
+                        % Case odd number of arrows --> the middle-arrow is at 0 initial turn
+                        \pgfmathsetmacro\baseangle{(#3 - 1) / 2 * \increment}
+                \fi
+
+                % Draw arrows
+                \pgfmathanglebetweenpoints{\pgfpointanchor{#1}{center}}{\pgfpointanchor{#2}{center}}
+                \pgfmathsetmacro\abangle{ \pgfmathresult }  % From: https://tex.stackexchange.com/a/39325
+                \pgfmathanglebetweenpoints{\pgfpointanchor{#2}{center}}{\pgfpointanchor{#1}{center}}
+                \pgfmathsetmacro\baangle{ \pgfmathresult }  % From: https://tex.stackexchange.com/a/39325
+
+                \pgfmathtruncatemacro\lastarrowindex{#3 - 1}
+                \foreach \x in {0,...,\lastarrowindex} {
+                        \pgfmathsetmacro\currangleab{ \abangle + \baseangle - \x * \increment }
+                        \pgfmathsetmacro\currangleba{ \baangle + \baseangle - (\lastarrowindex - \x) * \increment }
+                        \draw[Interaction] (#1.\currangleab) -- (#2.\currangleba);
+                }
+        \fi
+}
+
+
+\newcommand{\nodegrid}{
+    \node[Node] (n1) at (0, 0) {};
+    \node[Node] (n2) at (2, -0.6) {};
+    \node[Node] (n3) at (1, -2) {};
+    \node[Node] (n4) at (2.4, -3.5) {};
+    \node[Node] (n5) at (0.75, -4) {};
+    \node[Node] (n6) at (-0.75, -3.25) {};
+    \node[Node] (n7) at (-1.25, -1.75) {};
+}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Figure
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+    \begin{tikzpicture}
+        \pgfdeclarelayer{bgUpper}
+        \pgfdeclarelayer{bgLower}
+        \pgfsetlayers{bgLower,bgUpper,main}
+
+        \tikzstyle{Node}=[circle, very thick, minimum width=0.75cm, inner sep=0cm, draw=potB, fill=potB!20]
+        \tikzstyle{Interaction}=[very thick]
+        \tikzstyle{Description}=[align=left, font=\bfseries]
+        \tikzstyle{ContinuationDots}=[font=\bfseries\Large, anchor=center]
+        \tikzstyle{Box}=[fill=white, draw=black!55, line width=0.15cm, rounded corners=0.7cm, minimum width=8cm, minimum height=9.5cm, inner sep=0.2cm]
+        \tikzstyle{Title}=[font=\Large\bfseries]
+        \tikzstyle{Subtitle}=[font=\Large]
+        \tikzstyle{Arrow}=[-{Triangle[length=5.35cm, width=4.25cm]}, draw=black!12, line width=2.75cm]
+
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%% Box 1: Network
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        \node[scale=1.4] (Box1) at (0, 0) {
+            \begin{tikzpicture}
+                \nodegrid
+
+                \arrowbundle{n1}{n2}{5}
+                \arrowbundle{n2}{n3}{2}
+            \end{tikzpicture}
+        };
+
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%% Box 2: Ensemble
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        \node (Box2) at (10.5, 0) {
+            \begin{tikzpicture}
+
+                %%% Nodes
+                \node[scale=0.4] (altNet1) at (0, 0) {
+                    \begin{tikzpicture}
+                        \nodegrid
+
+                        \arrowbundle{n1}{n2}{6};
+                        \arrowbundle{n2}{n3}{1};
+                    \end{tikzpicture}
+                };
+
+                \node[below=0.9cm of altNet1, scale=0.4] (altNet2) {
+                    \begin{tikzpicture}
+                        \nodegrid
+
+                        \arrowbundle{n1}{n2}{2};
+                        \arrowbundle{n2}{n3}{5};
+                    \end{tikzpicture}
+                };
+
+                \node[below=0.9cm of altNet2, scale=0.4] (altNet3) {
+                    \begin{tikzpicture}
+                        \nodegrid
+
+                        \arrowbundle{n4}{n5}{1};
+                        \arrowbundle{n5}{n6}{5}
+                        \arrowbundle{n6}{n7}{1};
+                    \end{tikzpicture}
+                };
+
+                %%% Dots
+                \node[ContinuationDots] at ($(altNet1)!0.5!(altNet2)$) {\vdots};
+                \node[ContinuationDots] at ($(altNet2)!0.5!(altNet3)$) {\vdots};
+                \node[ContinuationDots, below=0.1cm of altNet3] {\vdots};
+
+                %%% Text
+                \node[Description, right=0.9cm of altNet1] {Likely \\ $p\approx 27\%$};
+                \node[Description, right=0.9cm of altNet2] {Unlikely \\ $p\approx 2\%$};
+                \node[Description, right=0.9cm of altNet3] {Highly unlikely \\ $p\approx 0\%$};
+            \end{tikzpicture}
+        };
+
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%% Box 3: Potentiality
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        \node[font=\Large, align=center, text width=6.7cm] (Box3) at (21, 0) {
+            \textbf{\code{potentiality() == 0.12}} \\[1cm]
+
+            Close to 0 because very few alternative networks are likely in this example.
+        };
+
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%% Box Backgrounds
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        %%% Boxes
+        \begin{pgfonlayer}{bgUpper}
+            \node[Box, fill=black!10, draw=black!65, fit=(Box1)] (BoxBackground1) {};
+            \node[Box, fill=potY!10, draw=potY!80, fit=(Box2)] (BoxBackground2) {};
+            \node[Box, fill=potR!10, draw=potR!80, fit=(Box3)] (BoxBackground3) {};
+        \end{pgfonlayer}
+
+        %%% Arrows
+        \begin{pgfonlayer}{bgLower}
+            \draw[Arrow] (Box1.center) -- (Box2.center);
+            \draw[Arrow] (Box2.center) -- (Box3.center);
+        \end{pgfonlayer}
+
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%% Labels
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        \node[Subtitle, below=0.6cm of BoxBackground1.south] (Caption1) {Observed interaction network};
+        \node[Subtitle, below=0.6cm of BoxBackground2.south] (Caption2) {Alternative networks};
+        \node[Subtitle, below=0.6cm of BoxBackground3.south] (Caption3) {Diversity of alt. networks};
+
+        \node[Title, below=0.12cm of Caption1.south] {\code{igraph::graph()}};
+        \node[Title, below=0.12cm of Caption2.south] {\code{ghypernet::ghype()}};
+        \node[Title, below=0.12cm of Caption3.south] {\code{potentiality()}};
+    \end{tikzpicture}
+\end{document}
