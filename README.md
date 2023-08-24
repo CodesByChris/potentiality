@@ -3,13 +3,24 @@
 [![GitHub](https://img.shields.io/github/license/CodesByChris/potentiality?label=License)](LICENSE)
 
 
-
-
 # Potentiality
 
-R library (`potentiality`) to compute the entropy and potentiality of [ghypernet](https://ghyper.net/) network ensembles.
+R library to compute the entropy and potentiality of [ghypernet](https://ghyper.net/) network ensembles.
 
-`potentiality` implements the potentiality measure introduced in the research paper
+![Potentiality Overview](docs/potentiality.png)
+
+This repository centers around the `potentiality` measure, quantifying a social organization's capacity to achieve diverse interaction configurations.
+This measure takes a multi-edge network as input, where nodes represent individuals and (multi-)edges their multiple interactions.
+It employs the generalized hypergeometric ensemble of random graphs ([ghypernet](https://ghyper.net/)) to determine alternative interaction networks and their probabilities relative to the input network.
+The `potentiality` is calculated as the Shannon entropy of this ensemble of networks, measuring the diversity of networks within it.
+This repository provides an accessible implementation of the measure.
+
+Key features:
+- Quantify an organization's potential to attain various interaction configurations.
+- Compare different organizations and stages of an organization's development.
+- Utilize a robust measure based on a closed-form probability distribution.
+
+The research underlying this repository was presented in the research paper
 *"What Is the Entropy of a Social Organization?"* by Christian Zingg, Giona Casiraghi, Giacomo Vaccario, and Frank Schweitzer, published in the journal *Entropy (2019, 21(9), 901; doi:10.3390/e21090901)*.
 
 
@@ -30,15 +41,15 @@ install_github("CodesByChris/potentiality", ref = github_release())
 
 ## Usage
 
-`potentiality` provides two functions:
-- `potentiality(...)`: computes a social organization's potentiality from a given (i) interaction network or (ii) `ghype` ensemble.
+This repository provides two R functions:
+- `potentiality`: computes a social organization's potentiality from a given (i) interaction network or (ii) `ghype` ensemble.
     Option (i) computes the potentiality as explained in Section 3 of *Zingg et al. (2019)* and internally fits the `ghype` ensemble for the potentiality computation.
     However, this approach may overfit networks with very many nodes.
     For such cases, option (ii) gives the users more control over the fitting process of the `ghype` ensemble, for example, enabling them to fit groups of nodes instead of individual nodes (see also [bccm](https://ghyper.net/reference/bccm.html)).
-    `potentiality(...)` is computed according to equation (10) in *Zingg et al. (2019)*.
-- `entropy_ghype(...)`: computes an approximate Shannon entropy of a [ghype ensemble](https://github.com/gi0na/r-ghypernet).
+    `potentiality` is computed according to equation (10) in *Zingg et al. (2019)*.
+- `entropy_ghype`: computes an approximate Shannon entropy of a [ghype ensemble](https://github.com/gi0na/r-ghypernet).
     The approximate Shannon entropy is computed according to equations (7) and (8) in *Zingg et al. (2019)*.
-    `entropy_ghype(...)` corresponds to `potentiality(...)` with the exception that it is not normalized to the interval $[0, 1]$.
+    `entropy_ghype` corresponds to `potentiality` with the exception that it is not normalized to the interval $[0, 1]$.
 
 
 ## Examples
@@ -74,6 +85,6 @@ at the Chair of Systems Design, ETH Zurich.
 
 ## Copyright
 
-The `potentiality` R library is released under the GNU Affero General Public License v3.0
+This repository is released under the GNU Affero General Public License v3.0
 
 Copyright 2019-2023, ETH Zurich.

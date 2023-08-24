@@ -112,7 +112,7 @@ entropy_ghype <- function(ens) {
 #'   as an igraph graph.
 #' @param directed Whether network is directed. If omitted, this is detected
 #'   from base_network.
-#' @param has_selfloops Whether base_network is allowed to have self-loops. If
+#' @param selfloops Whether base_network is allowed to have self-loops. If
 #'   omitted, this is detected from base_network.
 #' @param full_model Whether to use a full ghype (TRUE) or bccm (FALSE).
 #'   Defaults to TRUE.
@@ -120,7 +120,7 @@ entropy_ghype <- function(ens) {
 #' @export
 potentiality <- function(network,
                          directed = igraph::is_directed(network),
-                         has_selfloops = any(igraph::which_loop(network)),
+                         selfloops = any(igraph::which_loop(network)),
                          full_model = TRUE) {
 
   # Handle empty networks
@@ -128,14 +128,14 @@ potentiality <- function(network,
     return(0)
 
   # Compute params
-  if (has_selfloops)
+  if (selfloops)
     stop("ERROR: Potentiality not implemented for selfloops.")
 
   # Compute Potentiality
   if (isTRUE(full_model)) {
     # Use full ghype propensities
-    ens <- ghypernet::ghype(network, directed = directed,
-                            selfloops = has_selfloops, unbiased = FALSE)
+    ens <- ghypernet::ghype(network, directed = directed, selfloops = selfloops,
+                            unbiased = FALSE)
   } else {
     # Use bccm with inferred blocks
     adj <- igraph::get.adjacency(network, sparse = FALSE)
@@ -144,7 +144,7 @@ potentiality <- function(network,
       graph = igraph::as.undirected(net), modularity = FALSE
     ))
     ens <- ghypernet::bccm(adj, labels = labs, directed = directed,
-                           selfloops = has_selfloops, ignore_pvals = TRUE)
+                           selfloops = selfloops, ignore_pvals = TRUE)
   }
   return(.relative_entropy(ens))
 }

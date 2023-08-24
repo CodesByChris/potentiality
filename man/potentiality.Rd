@@ -7,7 +7,7 @@
 potentiality(
   network,
   directed = igraph::is_directed(network),
-  has_selfloops = any(igraph::which_loop(network)),
+  selfloops = any(igraph::which_loop(network)),
   full_model = TRUE
 )
 }
@@ -18,7 +18,7 @@ as an igraph graph.}
 \item{directed}{Whether network is directed. If omitted, this is detected
 from base_network.}
 
-\item{has_selfloops}{Whether base_network is allowed to have self-loops. If
+\item{selfloops}{Whether base_network is allowed to have self-loops. If
 omitted, this is detected from base_network.}
 
 \item{full_model}{Whether to use a full ghype (TRUE) or bccm (FALSE).
