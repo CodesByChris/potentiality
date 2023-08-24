@@ -87,44 +87,48 @@ entropy_ghype <- function(ens) {
 }
 
 
-#' Computes the ensemble's entropy normalized by the theoretical maximum.
+#' Computes the potentiality for a given ghype ensemble.
 #'
-#' @param ens ghype ensemble whose relative entropy to compute.
-#' @returns Relative entropy as a value in the interval between 0 and 1.
-.relative_entropy <- function(ens) {
-  entropy <- entropy_ghype(ens)
+#' @param x ghype ensemble whose potentiality to compute.
+#' @param ... Further arguments are ignored.
+#' @returns Computed potentiality in the interval `[0, 1]`.
+#' @export
+potentiality.ghype <- function(x, ...) {
+  entropy <- entropy_ghype(x)
   if (entropy == 0)
     return(0)
-  return(entropy / .max_entropy(ens))
+  return(entropy / .max_entropy(x))
 }
 
 
-#' Computes the potentiality according to a MLE fit.
+#' Computes the potentiality according to a MLE fit to a given network.
 #'
-#' The MLE fit has the property that network is preserved as the expected
-#' network over the ensemble.
+#' The MLE fit has the property that x is preserved as the expected network over
+#' the ensemble.
 #'
-#' For the special cases where network has no nodes or no edges, a potentiality
-#' of 0 is returned because there is always only this *one* network which
-#' fulfills these constraints.
+#' For the special cases where x has no nodes or no edges, a potentiality of 0
+#' is returned because there is always only this *one* network which fulfills
+#' these constraints.
 #'
-#' @param network Multiedge network of which to compute the potentiality, given
-#'   as an igraph graph.
-#' @param directed Whether network is directed. If omitted, this is detected
+#' @param x Multi-edge network of which to compute the potentiality, given as an
+#'   igraph.
+#' @param directed Whether x is directed. If omitted, this is detected
 #'   from base_network.
 #' @param selfloops Whether base_network is allowed to have self-loops. If
 #'   omitted, this is detected from base_network.
 #' @param full_model Whether to use a full ghype (TRUE) or bccm (FALSE).
 #'   Defaults to TRUE.
-#' @return The computed potentiality.
+#' @param ... Further arguments are ignored.
+#' @returns Computed potentiality in the interval `[0, 1]`.
 #' @export
-potentiality <- function(network,
-                         directed = igraph::is_directed(network),
-                         selfloops = any(igraph::which_loop(network)),
-                         full_model = TRUE) {
+potentiality.igraph <- function(x,
+                                directed = igraph::is_directed(x),
+                                selfloops = any(igraph::which_loop(x)),
+                                full_model = TRUE,
+                                ...) {
 
   # Handle empty networks
-  if (igraph::vcount(network) == 0 || igraph::ecount(network) == 0)
+  if (igraph::vcount(x) == 0 || igraph::ecount(x) == 0)
     return(0)
 
   # Compute params
@@ -134,11 +138,11 @@ potentiality <- function(network,
   # Compute Potentiality
   if (isTRUE(full_model)) {
     # Use full ghype propensities
-    ens <- ghypernet::ghype(network, directed = directed, selfloops = selfloops,
+    ens <- ghypernet::ghype(x, directed = directed, selfloops = selfloops,
                             unbiased = FALSE)
   } else {
     # Use bccm with inferred blocks
-    adj <- igraph::get.adjacency(network, sparse = FALSE)
+    adj <- igraph::get.adjacency(x, sparse = FALSE)
     net <- igraph::graph_from_adjacency_matrix(adj, weighted = TRUE)
     labs <- igraph::membership(igraph::cluster_fast_greedy(
       graph = igraph::as.undirected(net), modularity = FALSE
@@ -146,5 +150,17 @@ potentiality <- function(network,
     ens <- ghypernet::bccm(adj, labels = labs, directed = directed,
                            selfloops = selfloops, ignore_pvals = TRUE)
   }
-  return(.relative_entropy(ens))
+  return(potentiality.ghype(ens))
+}
+
+
+#' Generic method to compute the potentiality.
+#'
+#' @param x Object whose potentiality to compute. For example, it may be an
+#'     igraph or a ghype ensemble.
+#' @param ... Further arguments passed to the methods.
+#' @returns Computed potentiality in the interval `[0, 1]`.
+#' @export
+potentiality <- function(x, ...) {
+  UseMethod("potentiality")
 }

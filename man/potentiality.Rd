@@ -2,37 +2,19 @@
 % Please edit documentation in R/potentiality.R
 \name{potentiality}
 \alias{potentiality}
-\title{Computes the potentiality according to a MLE fit.}
+\title{Generic method to compute the potentiality.}
 \usage{
-potentiality(
-  network,
-  directed = igraph::is_directed(network),
-  selfloops = any(igraph::which_loop(network)),
-  full_model = TRUE
-)
+potentiality(x, ...)
 }
 \arguments{
-\item{network}{Multiedge network of which to compute the potentiality, given
-as an igraph graph.}
+\item{x}{Object whose potentiality to compute. For example, it may be an
+igraph or a ghype ensemble.}
 
-\item{directed}{Whether network is directed. If omitted, this is detected
-from base_network.}
-
-\item{selfloops}{Whether base_network is allowed to have self-loops. If
-omitted, this is detected from base_network.}
-
-\item{full_model}{Whether to use a full ghype (TRUE) or bccm (FALSE).
-Defaults to TRUE.}
+\item{...}{Further arguments passed to the methods.}
 }
 \value{
-The computed potentiality.
+Computed potentiality in the interval \verb{[0, 1]}.
 }
 \description{
-The MLE fit has the property that network is preserved as the expected
-network over the ensemble.
-}
-\details{
-For the special cases where network has no nodes or no edges, a potentiality
-of 0 is returned because there is always only this \emph{one} network which
-fulfills these constraints.
+Generic method to compute the potentiality.
 }
