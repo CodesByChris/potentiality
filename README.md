@@ -12,7 +12,7 @@ R library to compute the entropy and potentiality of [ghypernet](https://ghyper.
 This repository centers around the `potentiality` measure, quantifying a social organization's capacity to achieve diverse interaction configurations.
 This measure takes a multi-edge network as input, where nodes represent individuals and (multi-)edges their multiple interactions.
 It employs the generalized hypergeometric ensemble of random graphs ([ghypernet](https://ghyper.net/)) to determine alternative interaction networks and their probabilities relative to the input network.
-The `potentiality` is calculated as the Shannon entropy of this network ensemble, measuring the diversity of networks in it.
+The `potentiality` is calculated as the normalized Shannon entropy of this network ensemble, measuring the diversity of networks in it.
 This repository provides an accessible implementation of the measure.
 
 Key features:
