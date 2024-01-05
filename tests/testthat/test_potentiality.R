@@ -15,7 +15,7 @@ test_that("Undirected full network has potentiality 1", {
     for (j in 1:igraph::vcount(ntwk)) {
       if (i == j)
         next
-      ntwk %<>% igraph::add_edges(rep(c(i, j), times = multiplicity))
+      ntwk <- igraph::add_edges(ntwk, rep(c(i, j), times = multiplicity))
     }
   }
   expect_equal(potentiality(ntwk), 1)
@@ -30,7 +30,7 @@ test_that("Directed full network has potentiality 1", {
     for (j in 1:igraph::vcount(ntwk)) {
       if (i == j)
         next
-      ntwk %<>% igraph::add_edges(rep(c(i, j), times = multiplicity))
+      ntwk <- igraph::add_edges(ntwk, rep(c(i, j), times = multiplicity))
     }
   }
   expect_equal(potentiality(ntwk), 1)
@@ -63,7 +63,7 @@ test_that("potentiality 0 when only one pair communicates (undirected)", {
   n_nodes <- 30
   multiplicity <- 10000
   ntwk <- igraph::make_empty_graph(n_nodes, directed = FALSE)
-  ntwk %<>% igraph::add_edges(rep(c(1, 2), times = multiplicity))
+  ntwk <- igraph::add_edges(ntwk, rep(c(1, 2), times = multiplicity))
   expect_equal(potentiality(ntwk), 0)
 })
 
@@ -72,7 +72,7 @@ test_that("potentiality 0 when only one pair communicates (directed)", {
   n_nodes <- 30
   multiplicity <- 10000
   ntwk <- igraph::make_empty_graph(n_nodes, directed = TRUE)
-  ntwk %<>% igraph::add_edges(rep(c(1, 2), times = multiplicity))
+  ntwk <- igraph::add_edges(ntwk, rep(c(1, 2), times = multiplicity))
   expect_equal(potentiality(ntwk), 0)
 })
 
@@ -85,8 +85,8 @@ test_that("Directed network with 2 nodes and unidirectional preference", {
   weak_multiplicity <- 6
   strong_multiplicity <- 10000
   ntwk <- igraph::make_empty_graph(2, directed = TRUE)
-  ntwk %<>% igraph::add_edges(rep(c(1, 2), times = weak_multiplicity))
-  ntwk %<>% igraph::add_edges(rep(c(2, 1), times = strong_multiplicity))
+  ntwk <- igraph::add_edges(ntwk, rep(c(1, 2), times = weak_multiplicity))
+  ntwk <- igraph::add_edges(ntwk, rep(c(2, 1), times = strong_multiplicity))
   expect_equal(potentiality(ntwk), 0.431235, tolerance = 1E-5)
   # 0.431235 is computed by applying SciPy's multinomial entropy to the p_ij
   # from Eq.(8) in DOI:10.3390/e21090901.
@@ -102,7 +102,7 @@ test_that("Undirected star", {
   i_others <- (1:10)[-i_center]
   ntwk <- igraph::make_empty_graph(10, directed = FALSE)
   for (j in i_others) {
-    ntwk %<>% igraph::add_edges(rep(c(i_center, j), times = 10))
+    ntwk <- igraph::add_edges(ntwk, rep(c(i_center, j), times = 10))
   }
   pot <- potentiality(ntwk)
   expect_true(0.265 <= pot && pot <= 0.275)
